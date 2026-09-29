@@ -1,33 +1,40 @@
 export interface SensorReading {
   timestamp: number;
   timeLabel: string;
-  pressure: number; // in Pascals (differential pressure fluctuation)
+  pressure: number; // in Pascals (differential pressure fluctuation ΔP)
   temperature: number; // in Celsius
   signalRms?: number;
   noiseLevel?: number;
   filteredPressure?: number;
+  dominantFrequency?: number;
+  unfilteredWindPressure?: number;
+  thermalDriftPa?: number;
 }
 
 export interface SensorStatus {
   connected: boolean;
   source: 'simulation' | 'hardware';
-  samplingRate: number; // in Hz, e.g., 10 or 20 Hz
+  samplingRate: number; // in Hz, default 50 Hz
   lastUpdate: number;
   adcStatus: 'READY' | 'SAMPLING' | 'ERROR' | 'OFFLINE';
   memsStatus: 'CONNECTED' | 'DISCONNECTED' | 'SATURATED';
   tempSensorStatus: 'CONNECTED' | 'FAULT';
-  stm32Status: 'ONLINE' | 'STANDBY' | 'BOOTING';
-  dataPacketRate: number; // packets/sec
+  stm32Status: 'CONNECTED' | 'DISCONNECTED' | 'STANDBY';
+  dataPacketRate: number; // samples/s
+  droppedSamples: number;
+  uptimeSeconds: number;
   signalSaturation: boolean;
 }
 
 export interface FrequencyPoint {
   frequency: number; // in Hz
-  power: number; // in dB/Hz or Pa^2/Hz
+  power: number; // in dB/Hz
   amplitude: number; // in Pa
+  band: '0.01-0.1' | '0.1-1' | '1-10' | '10-20';
+  isDominant?: boolean;
 }
 
-export type EventStatus = 'NORMAL' | 'LOW-FREQUENCY DISTURBANCE' | 'POSSIBLE EVENT';
+export type EventStatus = 'NO SIGNIFICANT ACTIVITY' | 'SIGNAL DETECTED' | 'LOW-FREQUENCY DISTURBANCE';
 
 export interface InfrasoundEvent {
   id: string;
@@ -35,6 +42,7 @@ export interface InfrasoundEvent {
   status: EventStatus;
   dominantFreq: number;
   peakAmplitude: number;
+  bandEnergy: number; // in Pa²
   durationSec: number;
   confidence: number;
 }
@@ -42,7 +50,7 @@ export interface InfrasoundEvent {
 export interface ComponentSpec {
   id: string;
   name: string;
-  category: 'sensor' | 'pneumatic' | 'acquisition' | 'processing' | 'thermal';
+  category: 'atmosphere' | 'pneumatic' | 'sensor' | 'acquisition' | 'mcu' | 'dsp' | 'serial' | 'ui';
   sensingPrinciple: string;
   pressureRange: string;
   interfaceType: string;
@@ -55,60 +63,23 @@ export interface ComponentSpec {
   notes: string;
 }
 
-export interface BOMItem {
-  id: string;
-  component: string;
-  description: string;
-  quantity: number;
-  unitCost: number | null; // null if unpriced/awaiting final quote
-  totalCost: number | null;
-  status: 'Estimated' | 'Quoted' | 'Procured';
-}
+export type FilterType = 'OFF' | 'LOW PASS' | 'BAND PASS' | 'HIGH PASS';
 
-export type DevStatusState = 'complete' | 'in_progress' | 'pending';
-
-export interface DevStatusItem {
+export interface CalibrationItem {
   id: string;
-  milestone: string;
-  status: DevStatusState;
+  parameter: string;
+  value: string;
+  unit: string;
+  status: 'MEASURED' | 'TARGET' | 'SIMULATED' | 'NOT AVAILABLE';
   notes: string;
 }
 
-export interface ResearchReference {
+export interface ValidationItem {
   id: string;
   title: string;
-  authors: string;
-  year: number;
-  category: 'Infrasound' | 'MEMS Pressure Sensors' | 'Pneumatic Filtering' | 'Wind-Noise Reduction' | 'Signal Processing' | 'Calibration';
-  doi?: string;
-  link?: string;
-  relevance: string;
-}
-
-export interface DesignDecision {
-  decision: string;
-  reason: string;
-  alternativeConsidered: string;
-  impactOnInfrasound: string;
-}
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  department: string;
-  institution: string;
-  responsibility: string;
-  avatarPlaceholder?: string;
-}
-
-export interface SihSlide {
-  number: string;
-  title: string;
-  subtitle: string;
-  summary: string;
-  keyPoints: string[];
-  metrics?: { label: string; value: string }[];
+  status: 'complete' | 'in_progress' | 'pending';
+  category: string;
+  note: string;
 }
 
 export interface ProjectConfig {
@@ -117,12 +88,8 @@ export interface ProjectConfig {
   subText: string;
   problemStatementId: string;
   organization: string;
-  category: string;
-  theme: string;
   frequencyMin: number;
   frequencyMax: number;
-  targetPrototypeCostMin: number;
-  targetPrototypeCostMax: number;
   targetPrototypeCostDisplay: string;
   samplingRate: number;
   sensorResolution: string;

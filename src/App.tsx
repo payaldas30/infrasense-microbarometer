@@ -1,70 +1,85 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { SensorProvider } from './context/SensorContext';
-import { Navbar } from './components/common/Navbar';
-import { Footer } from './components/common/Footer';
-import { SettingsDrawer } from './components/common/SettingsDrawer';
-import { HomePage } from './pages/HomePage';
-import { DashboardPage } from './pages/DashboardPage';
-import { ArchitecturePage } from './pages/ArchitecturePage';
-import { SignalLabPage } from './pages/SignalLabPage';
-import { ValidationPage } from './pages/ValidationPage';
-import { HardwarePage } from './pages/HardwarePage';
-import { ResearchPage } from './pages/ResearchPage';
-import { SIHPage } from './pages/SIHPage';
-import { AboutPage } from './pages/AboutPage';
+import { InstrumentHeader } from './components/prototype/InstrumentHeader';
+import { MonitorPanel } from './components/prototype/MonitorPanel';
+import { SpectrumPanel } from './components/prototype/SpectrumPanel';
+import { SignalProcessingPanel } from './components/prototype/SignalProcessingPanel';
+import { SystemArchitecturePanel } from './components/prototype/SystemArchitecturePanel';
+import { CalibrationPanel } from './components/prototype/CalibrationPanel';
+import { DataAcquisitionPanel } from './components/prototype/DataAcquisitionPanel';
+import { ComponentModal } from './components/prototype/ComponentModal';
+import { InstrumentFooter } from './components/prototype/InstrumentFooter';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ROUTES: Record<string, React.FC<any>> = {
-  '/': HomePage,
-  '/dashboard': DashboardPage,
-  '/architecture': ArchitecturePage,
-  '/signal-lab': SignalLabPage,
-  '/validation': ValidationPage,
-  '/hardware': HardwarePage,
-  '/research': ResearchPage,
-  '/sih26144': SIHPage,
-  '/about': AboutPage,
+const InstrumentDashboard: React.FC = () => {
+  const [activeSection, setActiveSection] = useState<string>('monitor');
+
+  // Scrollspy to detect currently active section
+  useEffect(() => {
+    const sectionIds = ['monitor', 'spectrum', 'signal', 'system', 'calibration', 'data'];
+
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + 120;
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el && el.offsetTop <= scrollPos) {
+          setActiveSection(sectionIds[i]);
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#080c14] dark:bg-[#080c14] text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 antialiased flex flex-col">
+      
+      {/* 1. Fixed / Sticky Top Instrument Navigation Header */}
+      <InstrumentHeader activeSection={activeSection} />
+
+      {/* Thin technical scanline accent */}
+      <div className="h-0.5 w-full bg-gradient-to-r from-cyan-500/20 via-cyan-400 to-cyan-500/20 shadow-sm shadow-cyan-500/30" />
+
+      {/* 2. Main Instrument Canvas Container */}
+      <main className="flex-1 max-w-[1700px] w-full mx-auto px-3 sm:px-6 py-6 space-y-10">
+        
+        {/* Anchor Section 1: #monitor (Live Values & Oscilloscope) */}
+        <MonitorPanel />
+
+        {/* Anchor Section 2: #spectrum (Spectral Analysis & PSD) */}
+        <SpectrumPanel />
+
+        {/* Anchor Section 3: #signal (Digital Filter, Temp Compensation, Wind & Events) */}
+        <SignalProcessingPanel />
+
+        {/* Anchor Section 4: #system (Hardware Signal Chain, Pressure Input & Health) */}
+        <SystemArchitecturePanel />
+
+        {/* Anchor Section 5: #calibration (Calibration Bench & Validation Checklist) */}
+        <CalibrationPanel />
+
+        {/* Anchor Section 6: #data (Recording Bar, Operating Mode & Simulation Sliders) */}
+        <DataAcquisitionPanel />
+
+      </main>
+
+      {/* Technical Component Specification Modal */}
+      <ComponentModal />
+
+      {/* 3. Compact Instrument Footer */}
+      <InstrumentFooter />
+
+    </div>
+  );
 };
 
-const App: React.FC = () => {
-  const [currentPath, setCurrentPath] = React.useState<string>(
-    ROUTES[window.location.pathname] ? window.location.pathname : '/'
-  );
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
-
-  const navigate = (path: string) => {
-    setCurrentPath(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const PageComponent = ROUTES[currentPath] || HomePage;
-
+export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <SensorProvider>
-        <div className="min-h-screen bg-base text-t1 flex flex-col transition-colors duration-200">
-          <Navbar
-            currentPath={currentPath}
-            navigate={navigate}
-            openSettings={() => setSettingsOpen(true)}
-          />
-
-          <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
-
-          <main className="flex-1 pt-20">
-            {/* Thin gradient accent stripe */}
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
-
-            {currentPath === '/' ? (
-              <HomePage navigate={navigate} />
-            ) : (
-              <PageComponent navigate={navigate} />
-            )}
-          </main>
-
-          <Footer navigate={navigate} />
-        </div>
+        <InstrumentDashboard />
       </SensorProvider>
     </ThemeProvider>
   );
