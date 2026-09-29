@@ -9,10 +9,12 @@ import { SystemArchitecturePanel } from './components/prototype/SystemArchitectu
 import { CalibrationPanel } from './components/prototype/CalibrationPanel';
 import { DataAcquisitionPanel } from './components/prototype/DataAcquisitionPanel';
 import { ComponentModal } from './components/prototype/ComponentModal';
+import { InstrumentSettingsModal } from './components/prototype/InstrumentSettingsModal';
 import { InstrumentFooter } from './components/prototype/InstrumentFooter';
 
 const InstrumentDashboard: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('monitor');
+  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
 
   // Scrollspy to detect currently active section
   useEffect(() => {
@@ -34,13 +36,16 @@ const InstrumentDashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#080c14] dark:bg-[#080c14] text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 antialiased flex flex-col">
+    <div className="min-h-screen bg-base text-t1 font-sans selection:bg-cyan-500/30 selection:text-cyan-700 dark:selection:text-cyan-200 antialiased flex flex-col transition-colors duration-200">
       
       {/* 1. Fixed / Sticky Top Instrument Navigation Header */}
-      <InstrumentHeader activeSection={activeSection} />
+      <InstrumentHeader 
+        activeSection={activeSection} 
+        openSettings={() => setSettingsOpen(true)}
+      />
 
       {/* Thin technical scanline accent */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-cyan-500/20 via-cyan-400 to-cyan-500/20 shadow-sm shadow-cyan-500/30" />
+      <div className="h-0.5 w-full bg-gradient-to-r from-cyan-500/20 via-cyan-500 to-cyan-500/20 shadow-sm shadow-cyan-500/20" />
 
       {/* 2. Main Instrument Canvas Container */}
       <main className="flex-1 max-w-[1700px] w-full mx-auto px-3 sm:px-6 py-6 space-y-10">
@@ -67,6 +72,12 @@ const InstrumentDashboard: React.FC = () => {
 
       {/* Technical Component Specification Modal */}
       <ComponentModal />
+
+      {/* Functional Instrument Settings Modal */}
+      <InstrumentSettingsModal 
+        isOpen={settingsOpen} 
+        onClose={() => setSettingsOpen(false)} 
+      />
 
       {/* 3. Compact Instrument Footer */}
       <InstrumentFooter />
